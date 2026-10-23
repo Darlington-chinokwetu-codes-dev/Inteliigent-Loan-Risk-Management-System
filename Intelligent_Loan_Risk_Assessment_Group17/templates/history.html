@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}My Assessment History | LoanRisk{% endblock %}
+
+{% block content %}
+<section class="hero simple">
+    <div>
+        <span class="pill">YOUR PRIVATE DASHBOARD</span>
+        <h1>See how your assessments compare.</h1>
+        <p>Your chart history stays in this browser. It stores assessment dates, loan-to-income ratios and model estimates—not applicant details or actual repayment outcomes.</p>
+    </div>
+</section>
+
+<section class="trend-summary">
+    <article class="card trend-metric">
+        <span>Saved assessments</span>
+        <strong id="history-count">0</strong>
+        <small>Stored on this device only</small>
+    </article>
+    <article class="card trend-metric">
+        <span>History storage</span>
+        <strong>Browser only</strong>
+        <small>No account or server-side profile</small>
+    </article>
+</section>
+
+<section class="card trend-panel trend-panel-green">
+    <div class="history-heading">
+        <div>
+            <span class="section-kicker">AFFORDABILITY INDICATOR</span>
+            <h2>Loan-to-income ratio by assessment</h2>
+        </div>
+        <button type="button" class="secondary clear-history" id="clear-history">Clear history</button>
+    </div>
+    <p class="muted chart-caption">Requested loan amount divided by annual income. A higher ratio means the loan is larger relative to annual income; it is not a monthly repayment calculation.</p>
+    <div class="history-chart" id="ratio-chart" aria-live="polite"></div>
+</section>
+
+<section class="card trend-panel trend-panel-orange">
+    <div>
+        <span class="section-kicker">MODEL ESTIMATE</span>
+        <h2>Estimated default probability by assessment</h2>
+    </div>
+    <p class="muted chart-caption">These are model estimates, not observed defaults or guarantees of future repayment.</p>
+    <div class="history-chart" id="probability-chart" aria-live="polite"></div>
+</section>
+
+<section class="card trend-panel trend-panel-green">
+    <h2>Recent assessments</h2>
+    <div class="history-filters">
+        <label>Risk category<select id="history-risk"><option value="">All categories</option><option>LOW RISK</option><option>MEDIUM RISK</option><option>HIGH RISK</option></select></label>
+        <label>From date<input type="date" id="history-from"></label>
+        <label>To date<input type="date" id="history-to"></label>
+    </div>
+    <p id="history-filter-status" role="status"></p>
+    <div class="history-table-wrap">
+        <table class="history-table">
+            <thead>
+                <tr><th>Date</th><th>Applicant</th><th>Loan-to-income</th><th>Estimated default probability</th><th>Model category</th><th>Action</th></tr>
+            </thead>
+            <tbody id="history-rows"></tbody>
+        </table>
+    </div>
+    <p class="muted chart-caption">Only aggregate assessment metrics are shown. Browser data can be removed with the button above or by clearing this browser’s local storage.</p>
+</section>
+
+<section class="notice">
+    <span class="notice-icon" aria-hidden="true">i</span>
+    <div>
+        <strong>Want actual default-rate patterns?</strong>
+        <p>The <a href="{{ url_for('trends') }}">dataset overview</a> page summarizes recorded historical outcomes in the supplied dataset. Your own assessments do not include real repayment outcomes.</p>
+    </div>
+</section>
+{% endblock %}

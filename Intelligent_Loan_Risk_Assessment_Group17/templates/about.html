@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}About | LoanRisk{% endblock %}
+
+{% block content %}
+<section class="hero simple">
+    <div>
+        <span class="pill">ABOUT LOANRISK</span>
+        <h1>Risk insights, with people at the center.</h1>
+        <p>LoanRisk provides a structured estimate of loan default risk to support a more informed human review.</p>
+    </div>
+</section>
+
+<div class="card prose">
+    <h2>How the assessment works</h2>
+    <p>Applicant, loan and credit history information is validated and prepared for a trained machine-learning model. The result presents an estimated default probability, a risk category and supporting indicators.</p>
+
+    <h2>Model development</h2>
+    <p>Logistic Regression, Decision Tree, Random Forest and XGBoost.</p>
+
+    <h2>Performance evaluation</h2>
+    <p>Model performance is assessed using Accuracy, Precision, Recall, F1 Score and ROC-AUC. The training workflow selects the best-performing model using ROC-AUC.</p>
+
+    <h2>Responsible use</h2>
+    <p>Results are estimates, not guarantees or automatic lending decisions. Use appropriate, verified data and apply human oversight, privacy safeguards, fairness testing, explainability and all relevant regulatory review before any real-world use.</p>
+</div>
+{% endblock %}

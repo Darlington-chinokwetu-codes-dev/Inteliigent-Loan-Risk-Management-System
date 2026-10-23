@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Loan Details Preview | LoanRisk{% endblock %}
+
+{% block content %}
+<section class="result-wrap">
+    <article class="card intake-result">
+        <span class="pill"><span class="status-dot" aria-hidden="true"></span> DETAILS PREVIEW</span>
+        <h1>Custom loan preview</h1>
+        <p class="intake-summary">Loan type: <strong>{{ other_loan_type }}</strong></p>
+        <div class="intake-note">
+            These details were processed by this demo form only. They have not been sent to a lender or saved, and no risk score was generated because the model does not support this custom loan type.
+        </div>
+        <a class="button-link" href="{{ url_for('index') }}">Start another application</a>
+    </article>
+</section>
+{% endblock %}

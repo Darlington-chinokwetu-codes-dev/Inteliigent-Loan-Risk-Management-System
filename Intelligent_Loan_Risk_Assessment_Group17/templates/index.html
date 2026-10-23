@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Loan Assessment | LoanRisk{% endblock %}
+
+{% block content %}
+<section class="workspace-heading">
+    <div><span class="section-kicker">ASSESSMENT WORKSPACE</span><h1>New loan assessment</h1>
+    <p>One clear view of the applicant, the loan, and the estimated risk.</p></div>
+    <span class="demo-tag">Demo model &middot; Synthetic training data</span>
+</section>
+<script type="application/json" id="demo-sample">{{ sample|tojson }}</script>
+<div class="workspace-layout">
+{% if error %}
+<div class="alert" role="alert">{{ error }}</div>
+{% endif %}
+
+<form method="post" action="{{ url_for('index') }}" class="card form-card" id="assessment-form">
+    <div class="form-toolbar"><p id="form-instructions">Choose a loan purpose to get started.</p>
+    <button type="button" class="secondary" id="load-demo" hidden>Load demo example</button></div>
+    <ol class="form-progress" aria-label="Assessment progress" hidden>
+        <li data-step-label="0"><b>1</b> Loan details</li>
+        <li data-step-label="1"><b>2</b> Applicant</li>
+        <li data-step-label="2"><b>3</b> Review</li>
+    </ol>
+    <section class="applicant-block loan-block form-section loan-section" data-step="0">
+        <h3 tabindex="-1">Tell us about the loan</h3>
+        <p class="muted">These terms are used for both applicant estimates when a secondary applicant is required.</p>
+        <div class="grid">
+            <label class="field-accent-green">Loan Purpose
+                <select name="loan_intent" id="loan-purpose" required>
+                    <option value="" {% if not form.get('loan_intent') %}selected{% endif %}>Select loan purpose</option>
+                    {% for value, label in [("EDUCATION","Education / fees"),("VENTURE","Business venture"),("PERSONAL","Personal"),("DEBTCONSOLIDATION","Debt consolidation"),("HOMEIMPROVEMENT","Home improvement"),("OTHER","Other — specify")] %}
+                    <option value="{{ value }}" {% if form.get('loan_intent') == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <label class="field-accent-green">Loan Amount (₹)
+                <input type="number" name="loan_amnt" min="1" step="0.01" required value="{{ form.get('loan_amnt','') }}">
+            </label>
+            <label class="field-accent-orange" id="model-interest-field">Interest Rate (%)
+                <input type="number" name="loan_int_rate" min="0" step="0.01" required value="{{ form.get('loan_int_rate','') }}">
+            </label>
+            <label id="model-grade-field">Loan Grade
+                <select name="loan_grade" required><option value="">Select grade</option>
+                    {% for item in ["A","B","C","D","E","F","G"] %}
+                    <option value="{{ item }}" {% if form.get('loan_grade') == item %}selected{% endif %}>{{ item }}</option>
+                    {% endfor %}
+                </select>
+                <span class="field-hint">Use the lender-assigned A-G grade; do not guess.</span>
+            </label>
+        </div>
+    </section>
+
+    <section class="applicant-block form-section primary-section" data-step="1">
+        <h3 tabindex="-1">Primary applicant</h3>
+        <div class="grid">
+            <label>Age
+                <input type="number" name="person_age" min="18" max="100" step="1" required value="{{ form.get('person_age','') }}">
+                <span class="field-hint">Input range: 18–100. Actual eligibility varies by country, lender, and loan type.</span>
+            </label>
+            <label class="field-accent-green">Annual Income (₹)
+                <input type="number" name="person_income" min="1" step="0.01" required value="{{ form.get('person_income','') }}">
+            </label>
+            <label>Employment Length (years)
+                <input type="number" name="person_emp_length" min="0" step="0.1" required value="{{ form.get('person_emp_length','') }}">
+            </label>
+            <label>Home Ownership
+                <select name="person_home_ownership" required><option value="">Select ownership</option>
+                    {% for item in ["RENT","MORTGAGE","OWN","OTHER"] %}
+                    <option value="{{ item }}" {% if form.get('person_home_ownership') == item %}selected{% endif %}>{{ item }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Previous Default
+                <select name="cb_person_default_on_file" required><option value="">Select an answer</option>
+                    <option value="N" {% if form.get('cb_person_default_on_file') == "N" %}selected{% endif %}>No</option>
+                    <option value="Y" {% if form.get('cb_person_default_on_file') == "Y" %}selected{% endif %}>Yes</option>
+                </select>
+            </label>
+            <label>Credit History Length (years)
+                <input type="number" name="cb_person_cred_hist_length" min="0" step="0.1" required value="{{ form.get('cb_person_cred_hist_length','') }}">
+            </label>
+            <label class="field-accent-green">Credit Score
+                <input type="number" name="credit_score" min="300" max="850" step="1" required value="{{ form.get('credit_score','') }}">
+            </label>
+            <label class="field-accent-orange">Existing Debt (₹)
+                <input type="number" name="existing_debt" min="0" step="0.01" required value="{{ form.get('existing_debt','') }}"><span class="field-hint">Total outstanding balance, not monthly payments.</span>
+            </label>
+        </div>
+    </section>
+
+    <section class="applicant-block other-loan-block form-section" data-step="0" id="other-loan-details" {% if form.get('loan_intent') != 'OTHER' %}hidden{% endif %}>
+        <h3>Specify the loan type</h3>
+        <p class="muted">Describe the custom purpose so the application details are clearly identified.</p>
+        <div class="grid">
+            <label>Specific loan type
+                <input type="text" name="other_loan_type" maxlength="100" placeholder="For example, vehicle or medical expenses" value="{{ form.get('other_loan_type','') }}">
+            </label>
+        </div>
+        <p class="intake-note">Custom types can be previewed only; details are not saved. This model has not been trained to assess them, so no risk score will be generated.</p>
+    </section>
+
+    <section class="applicant-block secondary-block form-section" data-step="1" id="secondary-applicant" {% if form.get('loan_intent') != 'EDUCATION' %}hidden{% endif %}>
+        <h3>Secondary applicant <span class="required-note">Required for education / fees loans</span></h3>
+        <p class="muted">The secondary applicant receives a separate estimate using the same loan terms. The model does not combine applicant scores.</p>
+        <div class="grid">
+            <label>Age
+                <input type="number" name="secondary_person_age" min="18" max="100" step="1" value="{{ form.get('secondary_person_age','') }}">
+            </label>
+            <label>Annual Income (₹)
+                <input type="number" name="secondary_person_income" min="1" step="0.01" value="{{ form.get('secondary_person_income','') }}">
+            </label>
+            <label>Employment Length (years)
+                <input type="number" name="secondary_person_emp_length" min="0" step="0.1" value="{{ form.get('secondary_person_emp_length','') }}">
+            </label>
+            <label>Home Ownership
+                <select name="secondary_person_home_ownership">
+                    <option value="">Select ownership</option>
+                    {% for item in ["RENT","MORTGAGE","OWN","OTHER"] %}
+                    <option value="{{ item }}" {% if form.get('secondary_person_home_ownership') == item %}selected{% endif %}>{{ item }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Previous Default
+                <select name="secondary_cb_person_default_on_file">
+                    <option value="">Select an answer</option>
+                    <option value="N" {% if form.get('secondary_cb_person_default_on_file') == "N" %}selected{% endif %}>No</option>
+                    <option value="Y" {% if form.get('secondary_cb_person_default_on_file') == "Y" %}selected{% endif %}>Yes</option>
+                </select>
+            </label>
+            <label>Credit History Length (years)
+                <input type="number" name="secondary_cb_person_cred_hist_length" min="0" step="0.1" value="{{ form.get('secondary_cb_person_cred_hist_length','') }}">
+            </label>
+            <label>Credit Score
+                <input type="number" name="secondary_credit_score" min="300" max="850" step="1" value="{{ form.get('secondary_credit_score','') }}">
+            </label>
+            <label>Existing Debt (₹)
+                <input type="number" name="secondary_existing_debt" min="0" step="0.01" value="{{ form.get('secondary_existing_debt','') }}">
+            </label>
+        </div>
+    </section>
+
+    <section class="form-section" data-step="2" hidden>
+        <h3 tabindex="-1">Review your assessment</h3>
+        <p class="muted">Check these details before generating an estimate.</p>
+        <div id="review-summary"></div>
+        <button type="button" class="secondary" id="edit-review">Edit applicant details</button>
+    </section>
+    <p id="form-status" role="status"></p>
+    <div class="actions wizard-actions">
+        <button type="button" class="secondary" id="previous-step" hidden>Back</button>
+        <button type="reset" class="secondary">Reset Form</button>
+        <button type="button" id="next-step" hidden>Continue</button>
+        <button type="submit" id="submit-assessment">Assess Loan Risk</button>
+    </div>
+</form>
+<aside class="card assessment-sidebar">
+    <span class="section-kicker">AT A GLANCE</span><h2>Your assessment</h2>
+    <dl id="live-summary"><dt>Loan purpose</dt><dd>Not selected</dd><dt>Loan amount</dt><dd>Not entered</dd></dl>
+    <hr><h3>A guide, not a decision</h3><p>This academic model estimates risk from synthetic data. Results support human review.</p>
+    <p>Education loans include separate primary and secondary estimates.</p>
+</aside></div>
+
+<section class="notice">
+    <span class="notice-icon" aria-hidden="true">i</span>
+    <div>
+        <strong>Private assessment history, no account needed</strong>
+        <p>Only chart metrics are saved in this browser. Applicant details are not saved to assessment history. Use My history to review or clear saved charts.</p>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Risk Result | LoanRisk{% endblock %}
+
+{% block content %}
+<section class="result-wrap">
+    <a class="back" href="{{ url_for('index') }}">← New assessment</a>
+    <script type="application/json" id="assessment-history-entry">{{ assessment_history_entry|tojson }}</script>
+    <div class="result-tools"><form method="post" action="{{ url_for('edit_assessment') }}">
+    {% for key, value in applicant.items() %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endfor %}
+    <button class="secondary" type="submit">Edit inputs</button></form><button type="button" class="secondary" id="print-result">Print report</button></div>
+    <div class="card result-card">
+        <div class="result-heading">
+            <div>
+                <span class="demo-tag">Demo model &middot; Synthetic training data</span>
+                <h1>Loan Risk Assessment</h1>
+            </div>
+            <div class="risk-badge {{ result.risk_category|lower|replace(' ','-') }}">
+                {{ result.risk_category }}
+            </div>
+        </div>
+
+        {% if secondary_result %}
+        <section class="applicant-comparison" aria-label="Applicant estimates">
+            <article class="applicant-estimate">
+                <span>Primary applicant</span>
+                <strong>{{ result.default_probability }}%</strong>
+                <span>Estimated default probability</span>
+                <span class="risk-badge {{ result.risk_category|lower|replace(' ','-') }}">{{ result.risk_category }}</span>
+            </article>
+            <article class="applicant-estimate">
+                <span>Secondary applicant</span>
+                <strong>{{ secondary_result.default_probability }}%</strong>
+                <span>Estimated default probability</span>
+                <span class="risk-badge {{ secondary_result.risk_category|lower|replace(' ','-') }}">{{ secondary_result.risk_category }}</span>
+            </article>
+        </section>
+        <p class="muted">Each estimate uses the same loan terms and that applicant’s information. The estimates are separate; they are not combined into a joint-applicant score.</p>
+        {% endif %}
+
+        {% if secondary_result %}
+        <h2 class="applicant-detail-heading">Primary applicant details</h2>
+        {% endif %}
+        <div class="metrics">
+            <div class="metric">
+                <span>Default Probability</span>
+                <strong>{{ result.default_probability }}%</strong>
+            </div>
+            <div class="metric">
+                <span>Loan-to-Income Ratio</span>
+                <strong>{{ (result.loan_to_income_ratio * 100)|round(1) }}%</strong>
+            </div>
+        </div>
+
+        <div class="probability">
+            <div class="probability-bar">
+                <div class="probability-fill" style="width: {{ result.default_probability }}%"></div>
+            </div>
+            <div class="scale"><span>0%</span><span>Default probability</span><span>100%</span></div>
+        </div>
+
+        <div class="interpretation">
+            <h3>Interpretation</h3>
+            <p>{{ result.message }}</p>
+            <p class="muted">This output is intended to support human review, not to make an autonomous lending decision.</p>
+        </div>
+
+        <details class="assessment-chart"><summary>Explore dataset context</summary>
+            <div class="chart-heading">
+                <div>
+                    <span class="section-kicker">INCOME &amp; LOAN DISTRIBUTION</span>
+                    <h2>{% if secondary_result %}Primary applicant in portfolio context{% else %}This application in portfolio context{% endif %}</h2>
+                </div>
+                <span class="chart-legend"><i class="legend-history"></i> Historical records <i class="legend-applicant"></i> This application</span>
+            </div>
+            {% if history and applicant_point %}
+            <p class="muted chart-caption">Based on {{ history.dataset_type }}. Each circle represents an aggregated group of at least 10 historical records. Axes use a log scale; no individual historical application is shown.</p>
+            <div class="chart-scroll">
+                <svg class="distribution-chart" viewBox="0 0 560 330" role="img" aria-label="Aggregated historical loan amounts and annual incomes, with this assessment highlighted">
+                    <g class="chart-grid">
+                        <line x1="74" y1="22" x2="74" y2="268"></line>
+                        <line x1="74" y1="268" x2="536" y2="268"></line>
+                        <line x1="74" y1="145" x2="536" y2="145"></line>
+                        <line x1="305" y1="22" x2="305" y2="268"></line>
+                        <line x1="536" y1="22" x2="536" y2="268"></line>
+                        <line x1="74" y1="22" x2="536" y2="22"></line>
+                    </g>
+                    <g class="chart-axis-labels">
+                        <text x="74" y="288">{{ "₹{:,.0f}".format(history.income_min) }}</text>
+                        <text x="305" y="288" text-anchor="middle">Annual income · log scale</text>
+                        <text x="536" y="288" text-anchor="end">{{ "₹{:,.0f}".format(history.income_max) }}</text>
+                        <text x="20" y="27">Loan</text>
+                        <text x="20" y="40">₹{{ "{:,.0f}".format(history.loan_max) }}</text>
+                        <text x="20" y="260">₹{{ "{:,.0f}".format(history.loan_min) }}</text>
+                        <text x="305" y="318" text-anchor="middle">Applicant is marked with a diamond</text>
+                    </g>
+                    <g class="history-cells" data-cells='{{ history.cells|tojson }}'></g>
+                    <g class="applicant-marker" data-x="{{ applicant_point.x }}" data-y="{{ applicant_point.y }}">
+                        <path d="M0 -9 L9 0 L0 9 L-9 0 Z"></path>
+                    </g>
+                </svg>
+            </div>
+            {% if not history.cells %}
+            <p class="chart-caption">No historical group meets the minimum size needed to display this distribution.</p>
+            {% endif %}
+            {% if applicant_point.outside_history %}
+            <p class="chart-caption">The applicant is outside the historical chart range and is shown at the nearest edge.</p>
+            {% endif %}
+            {% else %}
+            <p class="muted">Historical loan data is unavailable, so this comparison cannot be displayed.</p>
+            {% endif %}
+            <div class="ratio-callout">
+                <strong>{{ (result.loan_to_income_ratio * 100)|round(1) }}%</strong>
+                <span>Loan amount as a share of annual income. This is not a monthly repayment or debt-to-income calculation.</span>
+            </div>
+        </details>
+
+        <section class="suggestions">
+            <span class="section-kicker">REVIEW CHECKLIST</span>
+            <h2>Suggested next steps</h2>
+            <ul>
+                {% for suggestion in result.suggestions %}
+                <li>{{ suggestion }}</li>
+                {% endfor %}
+            </ul>
+            {% if secondary_result %}
+            <h3>Secondary applicant review prompts</h3>
+            <ul>
+                {% for suggestion in secondary_result.suggestions %}
+                <li>{{ suggestion }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            <p class="muted">Suggestions are rule-based prompts for human review, not personalised financial advice or automated lending criteria.</p>
+        </section>
+    </div>
+</section>
+{% endblock %}

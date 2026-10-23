@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#102a43">
+    <meta name="description" content="A clear, responsible loan risk assessment experience for informed human review.">
+    <title>{% block title %}LoanRisk | Credit Risk Insights{% endblock %}</title>
+    <script>
+        try {
+            const savedTheme = localStorage.getItem("loanrisk-theme");
+            if (savedTheme === "dark" || savedTheme === "light") {
+                document.documentElement.dataset.theme = savedTheme;
+            }
+        } catch (error) {
+            if (error.name !== "SecurityError") throw error;
+        }
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/workspace.css') }}">
+</head>
+<body>
+    <header class="topbar">
+        <div class="container nav">
+            <div class="brand-lockup">
+                <a class="brand" href="{{ url_for('index') }}" aria-label="LoanRisk home">
+                    <span class="brand-mark" aria-hidden="true">L</span>
+                    <span>LoanRisk</span>
+                </a>
+                <div class="subtitle">Credit risk insights</div>
+            </div>
+            <nav>
+                <a href="{{ url_for('index') }}" {% if request.endpoint == 'index' %}aria-current="page"{% endif %}>Assessment</a>
+                <a href="{{ url_for('assessment_history') }}" {% if request.endpoint == 'assessment_history' %}aria-current="page"{% endif %}>My history</a>
+                <a href="{{ url_for('trends') }}" {% if request.endpoint == 'trends' %}aria-current="page"{% endif %}>Dataset overview</a>
+                <a href="{{ url_for('about') }}" {% if request.endpoint == 'about' %}aria-current="page"{% endif %}>About</a>
+            </nav>
+            <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false">
+                <span class="theme-toggle-icon" aria-hidden="true">☾</span>
+                <span class="theme-toggle-label">Dark mode</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <div class="container">
+            <strong>LoanRisk <span class="footer-divider">|</span> Decision support for responsible lending</strong>
+            <span>Assessment results support human review and are not lending decisions.</span>
+        </div>
+    </footer>
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/assessment.js') }}" defer></script>
+</body>
+</html>

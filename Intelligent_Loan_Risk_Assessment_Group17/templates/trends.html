@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Dataset Overview | LoanRisk{% endblock %}
+
+{% block content %}
+<section class="hero simple">
+    <div>
+        <span class="pill">PORTFOLIO OVERVIEW</span>
+        <h1>Understand lending patterns.</h1>
+        <p>Explore how loan size, annual income and historical outcomes relate across the available loan records.</p>
+    </div>
+</section>
+
+{% if history %}
+<section class="trend-summary">
+    <article class="card trend-metric">
+        <span>Historical applications</span>
+        <strong>{{ "{:,}".format(history.record_count) }}</strong>
+        <small>{{ history.dataset_type }}</small>
+    </article>
+    <article class="card trend-metric">
+        <span>Observed default rate</span>
+        <strong>{{ history.default_rate }}%</strong>
+        <small>Share of records labelled as default</small>
+    </article>
+</section>
+
+<section class="card trend-panel trend-panel-green">
+    <div class="chart-heading">
+        <div>
+            <span class="section-kicker">AFFORDABILITY PATTERNS</span>
+            <h2>Observed default rate by loan-to-income band</h2>
+        </div>
+    </div>
+    <p class="muted chart-caption">Loan amount divided by annual income. These are grouped historical outcomes, not chronological trends; the dataset contains no dates.</p>
+    <div class="trend-bars">
+        {% for band in history.loan_to_income_bands %}
+        <div class="trend-row">
+            <span class="trend-label">{{ band.label }}</span>
+            {% if band.default_rate is not none %}
+            <div class="trend-track" role="img" aria-label="{{ band.default_rate }} percent default rate across {{ band.loan_count }} records">
+                <span style="width: {{ band.default_rate }}%"></span>
+            </div>
+            <strong class="trend-rate">{{ band.default_rate }}%</strong>
+            {% else %}
+            <div class="trend-track trend-track-empty"><span></span></div>
+            <strong class="trend-rate">Insufficient records</strong>
+            {% endif %}
+            <small>{{ "{:,}".format(band.loan_count) }} records</small>
+        </div>
+        {% endfor %}
+    </div>
+    <p class="muted chart-caption">Rates are hidden for bands with fewer than 20 records to avoid over-interpreting small samples.</p>
+</section>
+
+<section class="card trend-panel trend-panel-orange trend-disclaimer">
+    <h2>How to read this overview</h2>
+    {% if history.dataset_type == "Synthetic demonstration dataset" %}
+    <p>The bundled dataset is synthetic demonstration data. Replace it with an approved, representative historical dataset before using these patterns for analysis.</p>
+    {% else %}
+    <p>These patterns are based on {{ history.dataset_type }}. Confirm it is approved, representative and suitable for analysis before relying on the results.</p>
+    {% endif %}
+    <p>The charts show associations in the available records and do not establish causation or predict future portfolio performance.</p>
+    <p>For real portfolio monitoring, add reliable origination and repayment dates, track outcomes over time, validate data quality, and review results for fairness and representativeness.</p>
+</section>
+{% else %}
+<section class="card trend-panel">
+    <h2>Historical data is unavailable</h2>
+    <p>The portfolio overview needs a loan-history CSV at <code>data/raw/loan_risk_demo.csv</code> with income, loan amount and loan status columns.</p>
+</section>
+{% endif %}
+{% endblock %}
