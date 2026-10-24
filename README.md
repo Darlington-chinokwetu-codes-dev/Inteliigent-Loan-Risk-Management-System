@@ -48,7 +48,7 @@ python3 -m venv .venv
 .venv/bin/python app.py
 ```
 
-Open **http://127.0.0.1:5000** in your browser. A trained pipeline is already included, so you can try an assessment before retraining anything. The launcher starts Flask in development mode for local use.
+Open **https://inteliigent-loan-risk-management-sy.vercel.app/** in your browser. A trained pipeline is already included, so you can try an assessment before retraining anything. The launcher starts Flask in development mode for local use.
 
 To get a feel for the workflow, choose a loan purpose, click **Load demo example**, then continue through the applicant and review steps. The example uses fictional details for an education loan and includes both applicants.
 
